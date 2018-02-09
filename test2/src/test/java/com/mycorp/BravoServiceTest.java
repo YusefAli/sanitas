@@ -4,6 +4,7 @@ import com.mycorp.services.BravoService;
 import com.mycorp.services.ClienteService;
 import com.mycorp.services.ZendeskService;
 import com.mycorp.support.DatosCliente;
+import com.mycorp.support.ValueCode;
 import com.mycorp.utils.Zendesk;
 import org.junit.Assert;
 import org.junit.Before;
@@ -14,12 +15,14 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.web.client.RestTemplate;
 import util.datos.UsuarioAlta;
 
+import java.util.Arrays;
+
 
 /**
  * Unit test for simple App.
  */
 @RunWith(MockitoJUnitRunner.class)
-public class RealizarSimulacionTest {
+public class BravoServiceTest {
 
 
     @Mock
@@ -31,11 +34,11 @@ public class RealizarSimulacionTest {
     @Mock
     ClienteService clienteService;
 
-    @Mock
-    BravoService bravoService;
-
     @InjectMocks
     @Spy
+    BravoService bravoService;
+
+    @Mock
     ZendeskService service;
 
     DatosCliente datosClienteMock;
@@ -69,17 +72,18 @@ public class RealizarSimulacionTest {
 
 
     @Test
-    public void testZendeskService() throws Exception {
+    public void testBravoService() throws Exception {
+        ValueCode valueCode = new ValueCode();
+        valueCode.setCode("testCode");
+        valueCode.setValue("testValue");
+        Mockito.when(bravoService.getTiposDocumentosRegistro()).thenReturn(Arrays.asList(valueCode, valueCode));
         Mockito.when(clienteService.getId(Matchers.any(UsuarioAlta.class), Matchers.any(StringBuilder.class), Matchers.any(StringBuilder.class)))
                 .thenReturn("testClienteServiceResponse");
 
-        Mockito.when(bravoService.getDatosBravo(Matchers.any(UsuarioAlta.class), Matchers.any(StringBuilder.class), Matchers.any(StringBuilder.class)))
-                .thenReturn(new StringBuilder().append("\\nDatos recuperados de BRAVO:\\n\\nTeléfono: null\\nFeha de nacimiento: 04/05/1984\\nNúmero documento: null\\nTipo cliente: POTENCIAL\\nID estado del cliente: null\\nID motivo de alta cliente: null\\nRegistrado: Sí\\n\\n"));
-
         Mockito.when(restTemplate.getForObject(Mockito.anyString(), Matchers.any(Class.class), Mockito.anyString())
         ).thenReturn(datosClienteMock);
-        String altaTicketZendesk = service.altaTicketZendesk(usuarioAlta, "yus");
-        Assert.assertEquals(altaTicketZendesk.toString(), "Nº tarjeta Sanitas o Identificador: 111111\\nTipo documento: 0\\nNº documento: null\\nEmail personal: null\\nNº móvil: null\\nUser Agent: yus\\n\\nDatos recuperados de BRAVO:\\n\\nTeléfono: null\\nFeha de nacimiento: 04/05/1984\\nNúmero documento: null\\nTipo cliente: POTENCIAL\\nID estado del cliente: null\\nID motivo de alta cliente: null\\nRegistrado: Sí\\n\\n");
+        StringBuilder altaTicketZendesk = bravoService.getDatosBravo(usuarioAlta, new StringBuilder().append("yus"), new StringBuilder());
+        Assert.assertEquals(altaTicketZendesk.toString(), "\\nDatos recuperados de BRAVO:\\n\\nTeléfono: null\\nFeha de nacimiento: 04/05/1984\\nNúmero documento: null\\nTipo cliente: POTENCIAL\\nID estado del cliente: null\\nID motivo de alta cliente: null\\nRegistrado: Sí\\n\\n");
     }
 
 
